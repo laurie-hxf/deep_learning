@@ -179,15 +179,15 @@ def slice_indexing_practice(x: Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
     """
     assert x.shape[0] >= 3
     assert x.shape[1] >= 5
-    last_row = None
-    third_col = None
-    first_two_rows_three_cols = None
-    even_rows_odd_cols = None
+    last_row = x[-1,:]
+    third_col = x[:,2:3]
+    first_two_rows_three_cols = x[:2,:3]
+    even_rows_odd_cols = x[::2,1::2]
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
@@ -230,7 +230,8 @@ def slice_assignment_practice(x: Tensor) -> Tensor:
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+    x[:2,:6]=torch.tensor([[0,1,2,2,2,2]])
+    x[2:4,:6]=torch.tensor([[3,4,3,4,5,5]])
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
@@ -253,12 +254,15 @@ def shuffle_cols(x: Tensor) -> Tensor:
         - The third column of y is the same as the third column of x
         - The fourth column of y is the same as the second column of x
     """
-    y = None
+    idx0 = torch.arange(4)
+    idx1 = torch.tensor([0,0,2,1])
+    y = torch.zeros((x.shape[0], 4), dtype=torch.long)
+    y[:,idx0]=x[:,idx1]
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
@@ -283,12 +287,13 @@ def reverse_rows(x: Tensor) -> Tensor:
             the second row of y should be equal to the second to last row of x,
             and so on.
     """
-    y = None
+    idx0 = torch.arange(x.shape[0])
+    y = torch.zeros_like(x)
+    y[idx0,:]=x[x.shape[0]-idx0-1,:]
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
@@ -312,12 +317,15 @@ def take_one_elem_per_col(x: Tensor) -> Tensor:
         - The second element of y is the first element of the second column of x
         - The third element of y is the fourth element of the third column of x
     """
-    y = None
+    y = torch.zeros((3,), dtype=torch.long)
+    idx0 = torch.arange(3)
+    idx1 = torch.tensor([1,0,3])
+    y[idx0]=x[idx1,idx0]
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
