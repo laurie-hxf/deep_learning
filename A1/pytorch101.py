@@ -348,12 +348,17 @@ def make_one_hot(x: List[int]) -> Tensor:
             of x[n]; in other words, if x[n] = c then y[n, c] = 1; all other
             elements of y are zeros. The dtype of y should be torch.float32.
     """
-    y = None
+    C = 1 + max(x)
+    y = torch.zeros((len(x), C), dtype=torch.float32)
+    idx0 = torch.arange(len(x))# 生成行索引 [0, 1, 2, 3]
+    x_ = torch.tensor(x)    #将list转化为tensor
+    idx1 = x_[idx0]
+    y[idx0, idx1] = 1.0
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
@@ -385,12 +390,12 @@ def sum_positive_entries(x: Tensor) -> Tensor:
     Returns:
         pos_sum: Python integer giving the sum of all positive values in x
     """
-    pos_sum = None
+    pos_sum = x[x>0].sum()
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
@@ -416,12 +421,20 @@ def reshape_practice(x: Tensor) -> Tensor:
     Returns:
         y: A reshaped version of x of shape (3, 8) as described above.
     """
-    y = None
+    temp = x.view(2,3,4)
+    y = torch.zeros_like(x)
+    y = y.reshape(3,8)
+    print(y[:,:4])
+    y[:,:4]=temp[0]
+    y[:,4:]=temp[1]
+
+    print(y)
+
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
@@ -455,12 +468,16 @@ def zero_row_min(x: Tensor) -> Tensor:
         y: Tensor of shape (M, N) that is a copy of x, except the minimum value
             along each row is replaced with 0.
     """
-    y = None
+
+    y = x.clone()
+    col_min_vals, col_min_idxs = x.min(dim=1)
+    idx = torch.arange(x.size(0))
+    y[idx,col_min_idxs]=0
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
@@ -511,12 +528,15 @@ def batched_matrix_multiply_loop(x: Tensor, y: Tensor) -> Tensor:
             of matrix multiplication between x[i] of shape (N, M) and y[i] of
             shape (M, P). The output z should have the same dtype as x.
     """
-    z = None
+    z = torch.zeros(x.size(0), x.size(1), y.size(2))
+    for i in range(x.size(0)):
+        z[i] = x[i]  .mm(y[i])
+
     ###########################################################################
     #                      TODO: Implement this function                      #
     ###########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ###########################################################################
     #                           END OF YOUR CODE                              #
     ###########################################################################
@@ -542,12 +562,13 @@ def batched_matrix_multiply_noloop(x: Tensor, y: Tensor) -> Tensor:
             of matrix multiplication between x[i] of shape (N, M) and y[i] of
             shape (M, P). The output z should have the same dtype as x.
     """
-    z = None
+
+    z = torch.bmm(x,y)
     ###########################################################################
     #                      TODO: Implement this function                      #
     ###########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ###########################################################################
     #                            END OF YOUR CODE                             #
     ###########################################################################
@@ -577,12 +598,19 @@ def normalize_columns(x: Tensor) -> Tensor:
         y: Tensor of shape (M, N) as described above. It should have the same
             dtype as the input x.
     """
-    y = None
+    M , N = x.size()
+    sum = x.sum(dim=0)
+    mean = sum/M
+    print(mean)
+    temp = (x - mean)*(x - mean)
+    temp = torch.sqrt(temp.sum(dim=0)/(M-1))
+    print(temp)
+    y = (x-mean)/temp
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
@@ -624,12 +652,15 @@ def mm_on_gpu(x: Tensor, w: Tensor) -> Tensor:
     Returns:
         y: Tensor of shape (A, C) as described above. It should not be in GPU.
     """
-    y = None
+    x = x.cuda()
+    w = w.cuda()
+    y = x.mm(w)
+    y = y.cpu()
+
     ##########################################################################
     #                      TODO: Implement this function                     #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
     ##########################################################################
     #                            END OF YOUR CODE                            #
     ##########################################################################
