@@ -52,6 +52,12 @@ def compute_distances_two_loops(x_train: torch.Tensor, x_test: torch.Tensor):
     num_train = x_train.shape[0]
     num_test = x_test.shape[0]
     dists = x_train.new_zeros(num_train, num_test)
+    for i in range(num_test):
+        for j in range(num_train):
+            diff = x_test[i, :] - x_train[j, :]
+            diff = diff **2
+            sum = diff.sum()
+            dists[j][i] = sum
     ##########################################################################
     # TODO: Implement this function using a pair of nested loops over the    #
     # training data and the test data.                                       #
@@ -60,7 +66,7 @@ def compute_distances_two_loops(x_train: torch.Tensor, x_test: torch.Tensor):
     # functions from torch.nn or torch.nn.functional.                        #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                           END OF YOUR CODE                             #
     ##########################################################################
@@ -97,6 +103,11 @@ def compute_distances_one_loop(x_train: torch.Tensor, x_test: torch.Tensor):
     num_train = x_train.shape[0]
     num_test = x_test.shape[0]
     dists = x_train.new_zeros(num_train, num_test)
+    for i in range(num_test):
+        temp = x_test[i, :] - x_train
+        temp = temp **2
+        temp_sum = temp.sum(dim=tuple(range(1, temp.ndimension())))
+        dists[:,i] = temp_sum
     ##########################################################################
     # TODO: Implement this function using only a single loop over x_train.   #
     #                                                                        #
@@ -104,7 +115,7 @@ def compute_distances_one_loop(x_train: torch.Tensor, x_test: torch.Tensor):
     # functions from torch.nn or torch.nn.functional.                        #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+
     ##########################################################################
     #                           END OF YOUR CODE                             #
     ##########################################################################
@@ -144,6 +155,10 @@ def compute_distances_no_loops(x_train: torch.Tensor, x_test: torch.Tensor):
     num_train = x_train.shape[0]
     num_test = x_test.shape[0]
     dists = x_train.new_zeros(num_train, num_test)
+
+    x_test=x_test.view(num_test,-1)
+    x_train=x_train.view(num_train,-1)
+    dists=torch.sum(x_train**2,dim=1).view(-1,1)+torch.sum(x_test**2,dim=1).view(1,-1)-2*torch.mm(x_train,x_test.t())
     ##########################################################################
     # TODO: Implement this function without using any explicit loops and     #
     # without creating any intermediate tensors with O(num_train * num_test) #
@@ -156,7 +171,8 @@ def compute_distances_no_loops(x_train: torch.Tensor, x_test: torch.Tensor):
     #       and a matrix multiply.                                           #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+    # 使用广播计算差异的平方和
+
     ##########################################################################
     #                           END OF YOUR CODE                             #
     ##########################################################################
@@ -199,7 +215,14 @@ def predict_labels(dists: torch.Tensor, y_train: torch.Tensor, k: int = 1):
     # HINT: Look up the function torch.topk                                  #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+    value,indices=torch.topk(dists,k,dim = 0,largest = False)
+    indices = y_train[indices]
+    indices,_ = torch.sort(indices,dim = 0)
+    count = 0
+    for i in indices.T:
+      mode_value, _ = torch.mode(i)
+      y_pred[count]=mode_value.item()
+      count+=1
     ##########################################################################
     #                           END OF YOUR CODE                             #
     ##########################################################################
@@ -223,7 +246,8 @@ class KnnClassifier:
         # `self.x_train` and `self.y_train`, accordingly.                    #
         ######################################################################
         # Replace "pass" statement with your code
-        pass
+        self.x_train = x_train
+        self.y_train = y_train
         ######################################################################
         #                         END OF YOUR CODE                           #
         ######################################################################
@@ -247,7 +271,11 @@ class KnnClassifier:
         # to predict output labels.                                          #
         ######################################################################
         # Replace "pass" statement with your code
-        pass
+        num_train = self.x_train.shape[0]
+        num_test = x_test.shape[0]
+        dists = self.x_train.new_zeros(num_train, num_test)
+        dists = compute_distances_no_loops(self.x_train,x_test)
+        y_test_pred = predict_labels(dists,self.y_train,k)
         ######################################################################
         #                         END OF YOUR CODE                           #
         ######################################################################
@@ -321,7 +349,8 @@ def knn_cross_validate(
     # HINT: torch.chunk                                                      #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+    x_train_folds = torch.chunk(x_train,num_folds)
+    y_train_folds = torch.chunk(y_train,num_folds)
     ##########################################################################
     #                           END OF YOUR CODE                             #
     ##########################################################################
@@ -342,7 +371,17 @@ def knn_cross_validate(
     # HINT: torch.cat                                                        #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+    for k in k_choices:
+      accuracy = []
+      for j in range(num_folds):
+        x_train_combined = torch.cat([x_train_folds[i] for i in range(num_folds) if i != j], dim=0)
+        y_train_combined = torch.cat([y_train_folds[i] for i in range(num_folds) if i != j], dim=0)
+        x_test = x_train_folds[j]
+        y_test = y_train_folds[j]
+        classifier = KnnClassifier(x_train_combined, y_train_combined)
+        accuracy.append(classifier.check_accuracy(x_test, y_test, k=k))
+      k_to_accuracies[k] = accuracy
+
     ##########################################################################
     #                           END OF YOUR CODE                             #
     ##########################################################################
@@ -372,7 +411,17 @@ def knn_get_best_k(k_to_accuracies: Dict[int, List]):
     # the value of k that has the highest mean accuracy accross all folds.   #
     ##########################################################################
     # Replace "pass" statement with your code
-    pass
+    average = 0
+    for key, value in k_to_accuracies.items():
+      temp_average = sum(value) / len(value)
+      if temp_average >= average:
+        if temp_average == average:
+          best_k = min(best_k,key)
+        else:
+          best_k = key
+        average = temp_average
+  
+      
     ##########################################################################
     #                           END OF YOUR CODE                             #
     ##########################################################################
